@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function TestPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const p = peek(token);
+  const p = await peek(token);
 
   if (p.state === 'not_found') {
     return (

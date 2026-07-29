@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
 
   // Final flush, then close. A late flush is dropped by saveAnswers' own
   // deadline check, so a stalled tab cannot post answers after time.
-  if (body.answers) saveAnswers(body.token, body.answers);
+  if (body.answers) await saveAnswers(body.token, body.answers);
 
-  const result = submitSitting(body.token, body.mode === 'timeout' ? 'timeout' : 'candidate');
+  const result = await submitSitting(body.token, body.mode === 'timeout' ? 'timeout' : 'candidate');
   return NextResponse.json({ ok: result !== null });
 }

@@ -16,10 +16,10 @@ function cell(v: unknown): string {
 
 export async function GET(req: NextRequest) {
   if (!(await isAuthed())) return new Response('Unauthorized', { status: 401 });
-  sweepExpired();
+  await sweepExpired();
 
   const sp = req.nextUrl.searchParams;
-  let rows = allCandidates().map((c) => ({ c, status: statusOf(c) }));
+  let rows = (await allCandidates()).map((c) => ({ c, status: statusOf(c) }));
   if (sp.get('status')) rows = rows.filter((r) => r.status === sp.get('status'));
   if (sp.get('tier')) rows = rows.filter((r) => r.c.band === sp.get('tier'));
   if (sp.get('level')) rows = rows.filter((r) => bankFor(r.c.level).level === sp.get('level'));

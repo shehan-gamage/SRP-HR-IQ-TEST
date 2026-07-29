@@ -12,6 +12,6 @@ export async function POST(req: NextRequest) {
   if (!body.token || typeof body.answers !== 'object' || body.answers === null) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
-  const ok = saveAnswers(body.token, body.answers);
+  const ok = await saveAnswers(body.token, body.answers);
   return NextResponse.json({ ok }, { status: ok ? 200 : 409 });
 }

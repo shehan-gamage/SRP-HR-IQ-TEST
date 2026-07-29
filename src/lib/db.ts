@@ -1,29 +1,34 @@
-import { DatabaseSync } from 'node:sqlite';
+import { createClient, type Client } from '@libsql/client';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 /**
- * SQLite via Node's built-in driver — no native compilation, no external
- * database process. The file lives on your server; candidate data never
- * leaves the machine.
+ * SQLite via libsql. Two modes, same schema and SQL dialect:
+ *
+ * - Local (default): a plain SQLite file at DB_PATH (./data/hriq.sqlite), as
+ *   before — dev machines and self-hosted office servers need no external
+ *   service and candidate data never leaves the machine.
+ * - Hosted: set TURSO_DATABASE_URL (+ TURSO_AUTH_TOKEN) and the same code
+ *   talks to a Turso/libsql server instead. Required on serverless hosts
+ *   (Vercel) where the filesystem is ephemeral and a local file cannot
+ *   persist between requests.
  */
 
-const DB_PATH = resolve(process.env.DB_PATH ?? './data/hriq.sqlite');
+const TURSO_URL = process.env.TURSO_DATABASE_URL;
+const TURSO_TOKEN = process.env.TURSO_AUTH_TOKEN;
+/* Forward slashes keep the file: URL valid on Windows. */
+const LOCAL_PATH = (process.env.DB_PATH ?? 'data/hriq.sqlite').replace(/\\/g, '/');
 
-function open(): DatabaseSync {
-  mkdirSync(dirname(DB_PATH), { recursive: true });
-  const db = new DatabaseSync(DB_PATH);
-  // Concurrent writers (autosaves, dashboard sweeps) should queue, not throw.
-  db.exec('PRAGMA busy_timeout = 5000');
-  // WAL lets the dashboard read while a candidate is writing autosaves.
-  // Harmless to retry: it is a no-op once the file is already in WAL mode.
-  try {
-    db.exec('PRAGMA journal_mode = WAL');
-  } catch {
-    /* another process holds the lock mid-switch; the existing mode still works */
+async function open(): Promise<Client> {
+  let client: Client;
+  if (TURSO_URL) {
+    client = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+  } else {
+    mkdirSync(dirname(resolve(LOCAL_PATH)), { recursive: true });
+    client = createClient({ url: `file:${LOCAL_PATH}` });
   }
-  db.exec('PRAGMA foreign_keys = ON');
-  db.exec(`
+
+  await client.execute(`
     CREATE TABLE IF NOT EXISTS candidates (
       id            TEXT PRIMARY KEY,
       token         TEXT NOT NULL UNIQUE,
@@ -46,16 +51,16 @@ function open(): DatabaseSync {
       score         INTEGER,
       band          TEXT,
       submit_mode   TEXT,
-      notes         TEXT NOT NULL DEFAULT ''
-    );
-    CREATE INDEX IF NOT EXISTS idx_candidates_created ON candidates(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_candidates_token   ON candidates(token);
+      notes         TEXT NOT NULL DEFAULT '',
+      invite_emailed_at INTEGER
+    )
   `);
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_candidates_created ON candidates(created_at DESC)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_candidates_token ON candidates(token)');
+
   // Lightweight migrations for databases created before these columns existed.
-  // `name` stays the composed display name; the parts allow structured export.
-  const cols = new Set(
-    (db.prepare('PRAGMA table_info(candidates)').all() as { name: string }[]).map((c) => c.name),
-  );
+  const info = await client.execute("SELECT name FROM pragma_table_info('candidates')");
+  const cols = new Set(info.rows.map((r) => String(r.name)));
   for (const ddl of [
     'invite_emailed_at INTEGER',
     "first_name TEXT NOT NULL DEFAULT ''",
@@ -63,24 +68,25 @@ function open(): DatabaseSync {
     "last_name TEXT NOT NULL DEFAULT ''",
     "level TEXT NOT NULL DEFAULT 'basic'",
   ]) {
-    if (!cols.has(ddl.split(' ')[0])) db.exec(`ALTER TABLE candidates ADD COLUMN ${ddl}`);
+    if (!cols.has(ddl.split(' ')[0])) {
+      await client.execute(`ALTER TABLE candidates ADD COLUMN ${ddl}`);
+    }
   }
-  return db;
+  return client;
 }
 
 /**
- * Lazy, memoised connection.
+ * Lazy, memoised connection (as a promise: opening runs the migrations).
  *
  * Deliberately NOT opened at module scope: `next build` imports every route in
  * several worker processes at once to collect page data, and each one would
- * race to create the file and switch it to WAL — which fails with
- * SQLITE_BUSY ("database is locked"). Opening on first query means importing a
- * module is free and only real requests touch the file. The memo also survives
- * dev-mode hot reload, which re-evaluates modules.
+ * race to create/migrate the database. Opening on first query means importing
+ * a module is free and only real requests touch the store. The memo also
+ * survives dev-mode hot reload, which re-evaluates modules.
  */
-const g = globalThis as unknown as { __hriqDb?: DatabaseSync };
+const g = globalThis as unknown as { __hriqDb?: Promise<Client> };
 
-export function getDb(): DatabaseSync {
+export function getDb(): Promise<Client> {
   return (g.__hriqDb ??= open());
 }
 
@@ -120,16 +126,20 @@ export function statusOf(c: CandidateRow, now = Date.now()): Status {
   return 'pending';
 }
 
-export function allCandidates(): CandidateRow[] {
-  return getDb()
-    .prepare('SELECT * FROM candidates ORDER BY created_at DESC')
-    .all() as unknown as CandidateRow[];
+export async function allCandidates(): Promise<CandidateRow[]> {
+  const db = await getDb();
+  const rs = await db.execute('SELECT * FROM candidates ORDER BY created_at DESC');
+  return rs.rows as unknown as CandidateRow[];
 }
 
-export function candidateById(id: string): CandidateRow | null {
-  return (getDb().prepare('SELECT * FROM candidates WHERE id = ?').get(id) as unknown as CandidateRow) ?? null;
+export async function candidateById(id: string): Promise<CandidateRow | null> {
+  const db = await getDb();
+  const rs = await db.execute({ sql: 'SELECT * FROM candidates WHERE id = ?', args: [id] });
+  return (rs.rows[0] as unknown as CandidateRow) ?? null;
 }
 
-export function candidateByToken(token: string): CandidateRow | null {
-  return (getDb().prepare('SELECT * FROM candidates WHERE token = ?').get(token) as unknown as CandidateRow) ?? null;
+export async function candidateByToken(token: string): Promise<CandidateRow | null> {
+  const db = await getDb();
+  const rs = await db.execute({ sql: 'SELECT * FROM candidates WHERE token = ?', args: [token] });
+  return (rs.rows[0] as unknown as CandidateRow) ?? null;
 }

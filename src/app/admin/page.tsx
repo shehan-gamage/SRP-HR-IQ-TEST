@@ -21,7 +21,7 @@ async function baseUrl(): Promise<string> {
 
 async function removeCandidate(formData: FormData) {
   'use server';
-  deleteCandidate(String(formData.get('id')));
+  await deleteCandidate(String(formData.get('id')));
   revalidatePath('/admin');
 }
 
@@ -33,11 +33,11 @@ export default async function Dashboard({
 }: {
   searchParams: Promise<{ status?: string; tier?: string; level?: string; q?: string; sort?: string }>;
 }) {
-  sweepExpired();
+  await sweepExpired();
   const sp = await searchParams;
   const base = await baseUrl();
 
-  let rows = allCandidates().map((c) => ({ c, status: statusOf(c) }));
+  let rows = (await allCandidates()).map((c) => ({ c, status: statusOf(c) }));
 
   if (sp.status) rows = rows.filter((r) => r.status === sp.status);
   if (sp.tier) rows = rows.filter((r) => r.c.band === sp.tier);
@@ -55,7 +55,7 @@ export default async function Dashboard({
     rows = [...rows].sort((a, b) => (b.c.score ?? -1) - (a.c.score ?? -1));
   }
 
-  const all = allCandidates();
+  const all = await allCandidates();
   const submitted = all.filter((c) => c.submitted_at);
   const shortlisted = submitted.filter((c) => (c.score ?? 0) >= CUTOFF);
   // Carry only the filters that are actually set, so the export matches the view.

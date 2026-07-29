@@ -23,7 +23,7 @@ async function create(formData: FormData) {
   if (!first || !last) redirect('/admin/new?e=1');
   if (sendNow && !email) redirect('/admin/new?e=2');
 
-  const c = createInvite({
+  const c = await createInvite({
     first,
     middle,
     last,
@@ -40,7 +40,7 @@ async function create(formData: FormData) {
     const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000';
     const proto = h.get('x-forwarded-proto') ?? 'http';
     const outcome = await sendInviteEmail(c, `${proto}://${host}/t/${c.token}`);
-    if (outcome === 'sent') markInviteEmailed(c.id);
+    if (outcome === 'sent') await markInviteEmailed(c.id);
     mail = `&mail=${outcome}`;
   }
   redirect(`/admin/c/${c.id}?new=1${mail}`);

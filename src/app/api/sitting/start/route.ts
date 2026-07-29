@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { token } = (await req.json().catch(() => ({}))) as { token?: string };
   if (!token) return NextResponse.json({ error: 'not_found' }, { status: 400 });
 
-  const out = openSitting(token);
+  const out = await openSitting(token);
   if ('error' in out) return NextResponse.json({ error: out.error }, { status: 409 });
   return NextResponse.json(out.payload);
 }

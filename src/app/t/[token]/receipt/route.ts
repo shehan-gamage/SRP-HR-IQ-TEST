@@ -16,9 +16,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
 
   // Close out any sitting whose clock ran out, so a candidate who was timed
   // out can still download their receipt immediately.
-  sweepExpired();
+  await sweepExpired();
 
-  const c = candidateByToken(token);
+  const c = await candidateByToken(token);
   if (!c) return new Response('Not found', { status: 404 });
   if (!c.submitted_at) return new Response('This assessment has not been submitted yet.', { status: 409 });
 

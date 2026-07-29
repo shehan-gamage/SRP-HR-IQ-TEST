@@ -93,7 +93,7 @@ export interface NewInvite {
   validDays?: number;
 }
 
-export function createInvite(input: NewInvite): CandidateRow {
+export async function createInvite(input: NewInvite): Promise<CandidateRow> {
   const now = Date.now();
   const validDays = input.validDays && input.validDays > 0 ? input.validDays : 14;
   const bank = bankFor(input.level);
@@ -119,25 +119,32 @@ export function createInvite(input: NewInvite): CandidateRow {
     created_at: now,
     expires_at: now + validDays * 86_400_000,
   };
-  getDb().prepare(
-    `INSERT INTO candidates
+  const db = await getDb();
+  await db.execute({
+    sql: `INSERT INTO candidates
        (id, token, name, first_name, middle_name, last_name, level, ref, position, email,
         extra_time, duration_sec, created_at, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    row.id, row.token, row.name, row.first_name, row.middle_name, row.last_name,
-    row.level, row.ref, row.position, row.email,
-    row.extra_time, row.duration_sec, row.created_at, row.expires_at,
-  );
-  return getDb().prepare('SELECT * FROM candidates WHERE id = ?').get(row.id) as unknown as CandidateRow;
+    args: [
+      row.id, row.token, row.name, row.first_name, row.middle_name, row.last_name,
+      row.level, row.ref, row.position, row.email,
+      row.extra_time, row.duration_sec, row.created_at, row.expires_at,
+    ],
+  });
+  return (await candidateByToken(row.token))!;
 }
 
-export function deleteCandidate(id: string): void {
-  getDb().prepare('DELETE FROM candidates WHERE id = ?').run(id);
+export async function deleteCandidate(id: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({ sql: 'DELETE FROM candidates WHERE id = ?', args: [id] });
 }
 
-export function markInviteEmailed(id: string): void {
-  getDb().prepare('UPDATE candidates SET invite_emailed_at = ? WHERE id = ?').run(Date.now(), id);
+export async function markInviteEmailed(id: string): Promise<void> {
+  const db = await getDb();
+  await db.execute({
+    sql: 'UPDATE candidates SET invite_emailed_at = ? WHERE id = ?',
+    args: [Date.now(), id],
+  });
 }
 
 export type PeekState = 'not_found' | 'expired' | 'submitted' | 'pending' | 'in_progress';
@@ -156,8 +163,8 @@ export interface Peek {
  * merely opening the link (or a browser prefetching it) must not consume the
  * candidate's time. Only the explicit Begin action calls `openSitting`.
  */
-export function peek(token: string): Peek {
-  const c = candidateByToken(token);
+export async function peek(token: string): Promise<Peek> {
+  const c = await candidateByToken(token);
   if (!c) return { state: 'not_found' };
   const common = {
     name: c.name,
@@ -180,8 +187,10 @@ export type OpenError = 'not_found' | 'expired' | 'already_submitted';
  * Opens (or resumes) a sitting. First call stamps `started_at` and freezes the
  * option shuffle, so a refresh cannot reroll the paper or the clock.
  */
-export function openSitting(token: string): { payload: SittingPayload } | { error: OpenError } {
-  const c = candidateByToken(token);
+export async function openSitting(
+  token: string,
+): Promise<{ payload: SittingPayload } | { error: OpenError }> {
+  const c = await candidateByToken(token);
   if (!c) return { error: 'not_found' };
   if (c.submitted_at) return { error: 'already_submitted' };
 
@@ -192,14 +201,17 @@ export function openSitting(token: string): { payload: SittingPayload } | { erro
   let row = c;
   if (!row.started_at) {
     const display = JSON.stringify(newDisplayOrder(bank.items));
-    getDb().prepare('UPDATE candidates SET started_at = ?, display_order = ? WHERE id = ?')
-      .run(now, display, row.id);
-    row = candidateByToken(token)!;
+    const db = await getDb();
+    await db.execute({
+      sql: 'UPDATE candidates SET started_at = ?, display_order = ? WHERE id = ?',
+      args: [now, display, row.id],
+    });
+    row = (await candidateByToken(token))!;
   }
 
   // Time already gone: close it out rather than serving a dead paper.
   if (remainingSec(row, now) <= 0) {
-    submitSitting(token, 'timeout');
+    await submitSitting(token, 'timeout');
     return { error: 'already_submitted' };
   }
 
@@ -238,8 +250,11 @@ export function openSitting(token: string): { payload: SittingPayload } | { erro
 }
 
 /** Accepts display positions; stores canonical indexes. */
-export function saveAnswers(token: string, displayAnswers: Record<string, number | null>): boolean {
-  const c = candidateByToken(token);
+export async function saveAnswers(
+  token: string,
+  displayAnswers: Record<string, number | null>,
+): Promise<boolean> {
+  const c = await candidateByToken(token);
   if (!c || c.submitted_at || !c.started_at) return false;
   if (remainingSec(c) <= 0 && Date.now() > (deadlineOf(c)! + GRACE_SEC * 1000)) return false;
 
@@ -251,15 +266,18 @@ export function saveAnswers(token: string, displayAnswers: Record<string, number
     canonical[item.id] =
       pos === null || pos === undefined || pos < 0 || pos > 3 ? null : display[item.id][pos];
   }
-  getDb().prepare('UPDATE candidates SET answers = ? WHERE id = ?')
-    .run(JSON.stringify(canonical), c.id);
+  const db = await getDb();
+  await db.execute({
+    sql: 'UPDATE candidates SET answers = ? WHERE id = ?',
+    args: [JSON.stringify(canonical), c.id],
+  });
   return true;
 }
 
 export type SubmitMode = 'candidate' | 'timeout' | 'admin';
 
-export function submitSitting(token: string, mode: SubmitMode): Result | null {
-  const c = candidateByToken(token);
+export async function submitSitting(token: string, mode: SubmitMode): Promise<Result | null> {
+  const c = await candidateByToken(token);
   if (!c || c.submitted_at) return null;
 
   const items = bankFor(c.level).items;
@@ -267,9 +285,11 @@ export function submitSitting(token: string, mode: SubmitMode): Result | null {
   const display = parseDisplay(c, items);
   const result = computeScore(answers, display, items);
 
-  getDb().prepare(
-    'UPDATE candidates SET submitted_at = ?, score = ?, band = ?, submit_mode = ? WHERE id = ?',
-  ).run(Date.now(), result.score, result.band.slug, mode, c.id);
+  const db = await getDb();
+  await db.execute({
+    sql: 'UPDATE candidates SET submitted_at = ?, score = ?, band = ?, submit_mode = ? WHERE id = ?',
+    args: [Date.now(), result.score, result.band.slug, mode, c.id],
+  });
 
   return result;
 }
@@ -279,15 +299,17 @@ export function submitSitting(token: string, mode: SubmitMode): Result | null {
  * candidate who closed the tab would otherwise sit at "in progress" forever.
  * Cheap enough to call on every dashboard load.
  */
-export function sweepExpired(): number {
+export async function sweepExpired(): Promise<number> {
   const now = Date.now();
-  const open = getDb()
-    .prepare('SELECT * FROM candidates WHERE submitted_at IS NULL AND started_at IS NOT NULL')
-    .all() as unknown as CandidateRow[];
+  const db = await getDb();
+  const rs = await db.execute(
+    'SELECT * FROM candidates WHERE submitted_at IS NULL AND started_at IS NOT NULL',
+  );
+  const open = rs.rows as unknown as CandidateRow[];
   let closed = 0;
   for (const c of open) {
     if (now > deadlineOf(c)! + GRACE_SEC * 1000) {
-      submitSitting(c.token, 'timeout');
+      await submitSitting(c.token, 'timeout');
       closed++;
     }
   }

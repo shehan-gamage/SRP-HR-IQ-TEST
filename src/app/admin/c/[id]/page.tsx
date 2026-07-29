@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return { title: candidateById(id)?.name ?? 'Candidate' };
+  return { title: (await candidateById(id))?.name ?? 'Candidate' };
 }
 
 const fmt = (ms: number | null) =>
@@ -24,13 +24,13 @@ async function emailInvite(formData: FormData) {
   'use server';
   await requireAdmin();
   const id = String(formData.get('id') ?? '');
-  const c = candidateById(id);
+  const c = await candidateById(id);
   if (!c || !c.email) redirect(`/admin/c/${id}?mail=failed`);
   const h = await headers();
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000';
   const proto = h.get('x-forwarded-proto') ?? 'http';
   const outcome = await sendInviteEmail(c, `${proto}://${host}/t/${c.token}`);
-  if (outcome === 'sent') markInviteEmailed(id);
+  if (outcome === 'sent') await markInviteEmailed(id);
   redirect(`/admin/c/${id}?mail=${outcome}`);
 }
 
@@ -43,7 +43,7 @@ export default async function CandidateDetail({
 }) {
   const { id } = await params;
   const { new: isNew, mail } = await searchParams;
-  const c = candidateById(id);
+  const c = await candidateById(id);
   if (!c) notFound();
 
   const h = await headers();

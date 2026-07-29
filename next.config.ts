@@ -1,8 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // node:sqlite is a built-in module; keep it out of the bundler's hands.
-  serverExternalPackages: ['node:sqlite'],
+  // libsql ships native bindings; keep it out of the bundler's hands.
+  serverExternalPackages: ['@libsql/client', 'libsql'],
+  // The receipt PDF reads its font files with fs at runtime; make sure they
+  // are traced into the serverless function bundle on Vercel.
+  outputFileTracingIncludes: {
+    '/t/[token]/receipt': ['./src/assets/fonts/**/*'],
+  },
   // Hide the dev-mode "N" badge; it confuses test sittings run against
   // `npm run dev`. Production builds never show it either way.
   devIndicators: false,
