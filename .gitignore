@@ -13,3 +13,8 @@ data/
 # Secrets
 .env.local
 .env*.local
+
+.vercel
+
+# Vercel project link
+.vercel/
