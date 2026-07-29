@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { CandidateRow } from './db';
+import { fmtDate } from './dates';
 
 /**
  * Invite delivery over Google Workspace SMTP, mirroring the SRP website's
@@ -39,9 +40,7 @@ export async function sendInviteEmail(c: CandidateRow, link: string): Promise<Se
   // Salutations use the first name only; fall back to the first word for
   // records created before the name was stored in parts.
   const dear = c.first_name || c.name.split(/\s+/)[0];
-  const expires = new Date(c.expires_at).toLocaleDateString(undefined, {
-    day: 'numeric', month: 'long', year: 'numeric',
-  });
+  const expires = fmtDate(c.expires_at);
   const forRole = c.position ? ` for the position of ${c.position}` : '';
 
   const text = [

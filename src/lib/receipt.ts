@@ -5,6 +5,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { CandidateRow } from './db';
 import { parseAnswers, resultFor } from './sitting';
 import { DOMAINS, bankFor } from './questions';
+import { fmtDateTime } from './dates';
 
 /**
  * Candidate-facing submission receipt.
@@ -36,12 +37,8 @@ export function referenceCode(c: CandidateRow): string {
   return c.id.replace(/-/g, '').slice(0, 8).toUpperCase();
 }
 
-function fmt(ms: number | null): string {
-  if (!ms) return '—';
-  const d = new Date(ms);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+/* Business-timezone timestamps; hosted servers run in UTC. */
+const fmt = fmtDateTime;
 
 /** pdf-lib's WinAnsi encoding throws on characters outside its range. */
 function safe(text: string): string {

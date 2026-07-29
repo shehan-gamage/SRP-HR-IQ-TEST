@@ -7,6 +7,7 @@ import { BANDS, CUTOFF } from '@/lib/scoring';
 import { LEVELS, TOTAL_ITEMS, bankFor } from '@/lib/questions';
 import CopyLink from '@/components/CopyLink';
 import ConfirmButton from '@/components/ConfirmButton';
+import { fmtDateTime } from '@/lib/dates';
 import { EyeIcon, TrashIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -25,8 +26,7 @@ async function removeCandidate(formData: FormData) {
   revalidatePath('/admin');
 }
 
-const fmt = (ms: number | null) =>
-  ms ? new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const fmt = fmtDateTime;
 
 export default async function Dashboard({
   searchParams,

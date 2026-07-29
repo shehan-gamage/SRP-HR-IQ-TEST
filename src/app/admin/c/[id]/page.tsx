@@ -9,6 +9,7 @@ import { CUTOFF } from '@/lib/scoring';
 import { DOMAINS, TOTAL_ITEMS, bankFor } from '@/lib/questions';
 import CopyLink from '@/components/CopyLink';
 import SubmitButton from '@/components/SubmitButton';
+import { fmtDateTime } from '@/lib/dates';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,8 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: (await candidateById(id))?.name ?? 'Candidate' };
 }
 
-const fmt = (ms: number | null) =>
-  ms ? new Date(ms).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+const fmt = fmtDateTime;
 
 async function emailInvite(formData: FormData) {
   'use server';
