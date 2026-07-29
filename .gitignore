@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# Candidate personal data and scores. Never commit.
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Secrets
+.env.local
+.env*.local
