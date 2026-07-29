@@ -26,10 +26,7 @@ export async function GET(req: NextRequest) {
   const q = sp.get('q')?.toLowerCase();
   if (q) {
     rows = rows.filter(
-      (r) =>
-        r.c.name.toLowerCase().includes(q) ||
-        r.c.ref.toLowerCase().includes(q) ||
-        r.c.position.toLowerCase().includes(q),
+      (r) => r.c.name.toLowerCase().includes(q) || r.c.position.toLowerCase().includes(q),
     );
   }
   if (sp.get('sort') === 'score') {

@@ -45,10 +45,7 @@ export default async function Dashboard({
   if (sp.q) {
     const q = sp.q.toLowerCase();
     rows = rows.filter(
-      (r) =>
-        r.c.name.toLowerCase().includes(q) ||
-        r.c.ref.toLowerCase().includes(q) ||
-        r.c.position.toLowerCase().includes(q),
+      (r) => r.c.name.toLowerCase().includes(q) || r.c.position.toLowerCase().includes(q),
     );
   }
   if (sp.sort === 'score') {
@@ -82,7 +79,7 @@ export default async function Dashboard({
       <div className="card noprint">
         <form className="row" method="get">
           <input
-            type="text" name="q" placeholder="Search name, ID or position"
+            type="text" name="q" placeholder="Search name or position"
             defaultValue={sp.q ?? ''} style={{ flex: '1 1 13.75rem', width: 'auto' }}
           />
           <select name="status" defaultValue={sp.status ?? ''} style={{ width: 'auto' }}>
