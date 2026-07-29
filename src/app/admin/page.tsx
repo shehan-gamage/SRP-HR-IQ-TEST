@@ -167,7 +167,7 @@ export default async function Dashboard({
                         <EyeIcon />
                       </Link>
                       {status === 'pending' || status === 'in_progress' ? (
-                        <CopyLink url={`${base}/t/${c.token}`} />
+                        <CopyLink url={`${base}/t/${c.token}`} size="icon" label="Copy Test Link" />
                       ) : null}
                       <form action={removeCandidate}>
                         <input type="hidden" name="id" value={c.id} />

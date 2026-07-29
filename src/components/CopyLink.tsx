@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { CheckIcon, LinkIcon } from './icons';
 
 export default function CopyLink({
   url,
@@ -9,8 +10,9 @@ export default function CopyLink({
 }: {
   url: string;
   label?: string;
-  /** 'sm' fits table rows; 'md' matches regular buttons for card CTAs. */
-  size?: 'sm' | 'md';
+  /** 'icon' matches the square table-row actions; 'sm' is a compact text
+   *  button; 'md' matches regular buttons for card CTAs. */
+  size?: 'icon' | 'sm' | 'md';
 }) {
   const [done, setDone] = useState(false);
 
@@ -28,6 +30,22 @@ export default function CopyLink({
     }
     setDone(true);
     setTimeout(() => setDone(false), 2000);
+  }
+
+  if (size === 'icon') {
+    return (
+      <button
+        type="button"
+        className="ghost btn-icon-only"
+        style={done ? { color: 'var(--ok)', borderColor: 'var(--ok)' } : undefined}
+        onClick={copy}
+        aria-label={done ? 'Copied' : label}
+        title={done ? 'Copied' : label}
+      >
+        {done ? <CheckIcon /> : <LinkIcon />}
+        <span className="sr-only" aria-live="polite">{done ? 'Copied' : ''}</span>
+      </button>
+    );
   }
 
   return (
