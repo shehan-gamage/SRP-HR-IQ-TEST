@@ -185,7 +185,14 @@ nav.top{
 }
 nav.top .brand{font-weight:700;display:inline-flex;align-items:center;gap:.5rem}
 nav.top .brand svg{width:1.125rem;height:1.125rem;color:var(--accent);flex:none}
-nav.top a{margin-right:.875rem;text-decoration:none;font-weight:600;font-size:.94rem}
+/* Header CTAs read as quiet links until hovered, then as soft pills. */
+nav.top a{
+  margin-right:.25rem;text-decoration:none;font-weight:600;font-size:.94rem;
+  padding:.375rem .625rem;border-radius:.5rem;
+  transition:background-color .15s ease-out,color .15s ease-out
+}
+nav.top a:hover{background:var(--chip)}
+nav.top a:active{background:color-mix(in srgb,var(--accent) 14%,var(--chip))}
 
 /* candidate test */
 #bar{
