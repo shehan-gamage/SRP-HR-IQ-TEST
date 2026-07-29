@@ -15,6 +15,7 @@ import Script from 'next/script';
  */
 import '@fontsource-variable/plus-jakarta-sans';
 import './globals.css';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export const metadata: Metadata = {
   title: {
@@ -40,6 +41,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             Registered beforeInteractive so it runs ahead of the framework's
             handlers; stopImmediatePropagation swallows ONLY events whose
             stack or source is a browser extension, never app errors. */}
+        {/* Replay the stored theme choice before first paint so a dark-mode
+            user never sees a light flash (and vice versa). No value = system. */}
+        <Script id="theme-init" strategy="beforeInteractive">{`
+          try {
+            var t = localStorage.getItem('theme');
+            if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+          } catch (e) {}
+        `}</Script>
         <Script id="extension-error-filter" strategy="beforeInteractive">{`
           (function () {
             var fromExt = function (s) {
@@ -65,6 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })();
         `}</Script>
         {children}
+        <ThemeToggle />
       </body>
     </html>
   );

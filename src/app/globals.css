@@ -10,18 +10,31 @@
    name after it catches a locally installed copy.
 --------------------------------------------------------------------------- */
 
+/* Theme model: light is the base. Dark applies either because the OS prefers
+   it (and the user has not forced light), or because the user forced dark.
+   The explicit choice lives in localStorage('theme') and is stamped onto
+   <html data-theme="..."> before first paint by the inline script in
+   layout.tsx; no attribute means "system". */
 :root{
   --font-sans:'Plus Jakarta Sans Variable','Plus Jakarta Sans',
               -apple-system,BlinkMacSystemFont,
               'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
   --font-mono:'Roboto Mono',ui-monospace,SFMono-Regular,Consolas,monospace;
 
+  color-scheme:light;
   --bg:#f6f7f9; --card:#fff; --ink:#14181f; --muted:#5b6572; --line:#dfe3e8;
   --accent:#1f4e79; --accent-ink:#fff; --ok:#1a7f4b; --warn:#a86a00; --bad:#b3261e;
   --chip:#eef1f5;
 }
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f1216; --card:#161b22; --ink:#e6e9ee; --muted:#9aa4b2; --line:#2a323d;
+  --accent:#5b9bd5; --accent-ink:#0f1216; --ok:#4ec98a; --warn:#e0a23c; --bad:#f2736a;
+  --chip:#1e252e;
+}
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
     --bg:#0f1216; --card:#161b22; --ink:#e6e9ee; --muted:#9aa4b2; --line:#2a323d;
     --accent:#5b9bd5; --accent-ink:#0f1216; --ok:#4ec98a; --warn:#e0a23c; --bad:#f2736a;
     --chip:#1e252e;
@@ -261,13 +274,24 @@ fieldset.opts{border:0;margin:0;padding:0;min-width:0}
 .success-card .actions{margin-top:1.625rem;display:flex;gap:.625rem;justify-content:center;flex-wrap:wrap}
 .success-card .btn,.success-card button{padding:.6875rem 1.375rem}
 
+/* Floating theme switcher, present on every screen. */
+.theme-toggle{
+  position:fixed;bottom:1.25rem;right:1.25rem;z-index:60;
+  width:2.375rem;height:2.375rem;padding:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--card);border:1px solid var(--line);color:var(--muted);
+  box-shadow:0 2px 8px rgba(0,0,0,.14)
+}
+.theme-toggle:hover{color:var(--accent);border-color:var(--accent)}
+.theme-toggle svg{width:1.05rem;height:1.05rem}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
 
 @media print{
   body{background:#fff}
-  .noprint{display:none!important}
+  .noprint,.theme-toggle{display:none!important}
   .card{border:1px solid #999;break-inside:avoid}
   nav.top{display:none}
 }
