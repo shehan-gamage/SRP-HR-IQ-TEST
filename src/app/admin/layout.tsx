@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { destroySession, requireAdmin } from '@/lib/auth';
+import { ClipboardCheckIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <>
       <nav className="top noprint">
         <div>
-          <span className="brand">Aptitude Assessment</span>
+          <span className="brand">
+            <ClipboardCheckIcon /> Assessment Center
+          </span>
         </div>
         <div className="row">
           <Link href="/admin">Candidates</Link>
