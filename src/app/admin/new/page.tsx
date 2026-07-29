@@ -103,7 +103,7 @@ export default async function NewInvite({
           </label>
           <label className="check">
             <input type="checkbox" name="sendNow" defaultChecked />
-            <span>Email the Test Link to the Candidate Now</span>
+            <span>Email the Assessment Link to the Candidate Now</span>
           </label>
           {!mailConfigured ? (
             <p className="note">
