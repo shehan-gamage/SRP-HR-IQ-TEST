@@ -7,7 +7,6 @@ import { BANDS, CUTOFF } from '@/lib/scoring';
 import { LEVELS, TOTAL_ITEMS, bankFor } from '@/lib/questions';
 import CopyLink from '@/components/CopyLink';
 import ConfirmButton from '@/components/ConfirmButton';
-import { fmtDateTime } from '@/lib/dates';
 import { EyeIcon, TrashIcon } from '@/components/icons';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +25,6 @@ async function removeCandidate(formData: FormData) {
   revalidatePath('/admin');
 }
 
-const fmt = fmtDateTime;
 
 export default async function Dashboard({
   searchParams,
@@ -125,7 +123,6 @@ export default async function Dashboard({
                 <th>Status</th>
                 <th className="right">Score</th>
                 <th>Tier</th>
-                <th>Sat</th>
                 <th className="noprint">Actions</th>
               </tr>
             </thead>
@@ -155,7 +152,6 @@ export default async function Dashboard({
                       </span>
                     ) : '—'}
                   </td>
-                  <td className="note">{fmt(c.submitted_at)}</td>
                   <td className="noprint">
                     <div className="row">
                       <Link
