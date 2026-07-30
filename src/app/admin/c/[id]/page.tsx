@@ -230,7 +230,9 @@ export default async function CandidateDetail({
                     <tr key={it.itemId}>
                       <td>{i + 1}</td>
                       <td><span className="tag">{DOMAINS[it.domain]}</span></td>
-                      <td className="note">{item.stem.slice(0, 60)}…</td>
+                      <td className="note" style={{ minWidth: '16rem', whiteSpace: 'pre-line' }}>
+                        {item.stem}
+                      </td>
                       <td>{it.given === null ? '—' : `${it.givenLetter}. ${item.options[it.given]}`}</td>
                       <td>{`${it.correctLetter}. ${item.options[item.answer]}`}</td>
                       <td className={it.correct ? 'ok' : 'bad'}>
