@@ -153,7 +153,7 @@ export default async function Dashboard({
                     ) : '—'}
                   </td>
                   <td className="noprint">
-                    <div className="row">
+                    <div className="actions-row">
                       <Link
                         className="btn ghost btn-icon-only"
                         href={`/admin/c/${c.id}`}

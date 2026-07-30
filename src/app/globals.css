@@ -84,6 +84,8 @@ h2{font-size:1.1rem;margin:0 0 .625rem}
 .ok{color:var(--ok)} .bad{color:var(--bad)}
 .right{text-align:right}
 .row{display:flex;gap:.625rem;align-items:center;flex-wrap:wrap}
+/* Table-row actions stay on one line; the card scrolls if space runs out. */
+.actions-row{display:flex;gap:.625rem;align-items:center;flex-wrap:nowrap}
 .spread{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .hidden{display:none}
 /* Visually hidden, still read by screen readers (question legends etc.). */
