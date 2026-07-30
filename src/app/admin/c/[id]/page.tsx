@@ -9,6 +9,7 @@ import { CUTOFF } from '@/lib/scoring';
 import { DOMAINS, TOTAL_ITEMS, bankFor } from '@/lib/questions';
 import CopyLink from '@/components/CopyLink';
 import SubmitButton from '@/components/SubmitButton';
+import { DownloadIcon } from '@/components/icons';
 import { fmtDateTime } from '@/lib/dates';
 
 export const dynamic = 'force-dynamic';
@@ -97,6 +98,18 @@ export default async function CandidateDetail({
       ) : isNew ? (
         <div className="banner info noprint" role="status">
           Invite created. Send the link below to the candidate.
+        </div>
+      ) : null}
+
+      {done ? (
+        <div className="row noprint" style={{ marginBottom: '1rem' }}>
+          <a className="btn primary btn-icon" href={`/t/${c.token}/receipt`} download>
+            <DownloadIcon /> Download Receipt (PDF)
+          </a>
+          <span className="note">
+            The same submission receipt the candidate receives — score, sub-domain profile and
+            item review.
+          </span>
         </div>
       ) : null}
 
