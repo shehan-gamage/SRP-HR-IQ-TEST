@@ -316,7 +316,7 @@ export default function TestRunner({
                     checked={answers[item.id] === pos}
                     onChange={() => pick(item.id, pos)}
                   />
-                  <span className="ltr" aria-hidden="true">{'ABCD'[pos]}</span>
+                  <span className="ltr" aria-hidden="true">{'ABCD'[pos]}.</span>
                   <span>{opt}</span>
                 </label>
               ))}

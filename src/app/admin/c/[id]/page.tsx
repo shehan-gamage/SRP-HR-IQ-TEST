@@ -224,19 +224,22 @@ export default async function CandidateDetail({
                 </tr>
               </thead>
               <tbody>
-                {result.items.map((it, i) => (
-                  <tr key={it.itemId}>
-                    <td>{i + 1}</td>
-                    <td><span className="tag">{DOMAINS[it.domain]}</span></td>
-                    <td className="note">{stemById.get(it.itemId)!.stem.slice(0, 60)}…</td>
-                    <td>{it.givenLetter}</td>
-                    <td>{it.correctLetter}</td>
-                    <td className={it.correct ? 'ok' : 'bad'}>
-                      {it.correct ? 'Correct' : it.given === null ? 'Blank' : 'Incorrect'}
-                    </td>
-                    <td className="note">{stemById.get(it.itemId)!.rationale}</td>
-                  </tr>
-                ))}
+                {result.items.map((it, i) => {
+                  const item = stemById.get(it.itemId)!;
+                  return (
+                    <tr key={it.itemId}>
+                      <td>{i + 1}</td>
+                      <td><span className="tag">{DOMAINS[it.domain]}</span></td>
+                      <td className="note">{item.stem.slice(0, 60)}…</td>
+                      <td>{it.given === null ? '—' : `${it.givenLetter}. ${item.options[it.given]}`}</td>
+                      <td>{`${it.correctLetter}. ${item.options[item.answer]}`}</td>
+                      <td className={it.correct ? 'ok' : 'bad'}>
+                        {it.correct ? 'Correct' : it.given === null ? 'Blank' : 'Incorrect'}
+                      </td>
+                      <td className="note">{item.rationale}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

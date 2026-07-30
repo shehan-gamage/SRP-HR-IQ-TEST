@@ -278,9 +278,20 @@ export async function buildReceipt(c: CandidateRow): Promise<Uint8Array> {
   const contentW = right - MARGIN;
   result.items.forEach((it, i) => {
     const item = stemById.get(it.itemId)!;
+    // Dual-value answer format: display letter plus the full option text.
+    const yourAnswer =
+      it.given === null ? '—' : `${it.givenLetter}. ${item.options[it.given]}`;
+    const correctAnswer = `${it.correctLetter}. ${item.options[item.answer]}`;
+
     const stemLines = wrap(`${i + 1}. ${item.stem}`, bold, 9.5, contentW);
+    const yourLines = wrap(`Your Answer: ${yourAnswer}`, regular, 9, contentW - 12);
+    const correctLines = wrap(`Correct Answer: ${correctAnswer}`, regular, 9, contentW - 12);
     const rationaleLines = wrap(item.rationale, regular, 8.5, contentW - 12);
-    ensure(stemLines.length * 12 + 13 + rationaleLines.length * 11 + 16);
+    ensure(
+      stemLines.length * 12 + 13 +
+      (yourLines.length + correctLines.length) * 12 +
+      rationaleLines.length * 11 + 18,
+    );
 
     for (const l of stemLines) {
       text(l, { size: 9.5, font: bold });
@@ -288,12 +299,17 @@ export async function buildReceipt(c: CandidateRow): Promise<Uint8Array> {
     }
     const status = it.correct ? 'Correct' : it.given === null ? 'Not Answered' : 'Incorrect';
     const statusColor = it.correct ? GREEN : it.given === null ? MUTED : RED;
-    text(
-      `${DOMAINS[it.domain]}  ·  Your Answer: ${it.givenLetter}  ·  Correct Answer: ${it.correctLetter}`,
-      { size: 9, color: MUTED },
-    );
+    text(DOMAINS[it.domain], { size: 9, color: MUTED });
     text(status, { x: right - bold.widthOfTextAtSize(status, 9), size: 9, font: bold, color: statusColor });
     y -= 13;
+    for (const l of yourLines) {
+      text(l, { x: MARGIN + 12, size: 9, color: it.correct ? GREEN : it.given === null ? MUTED : RED });
+      y -= 12;
+    }
+    for (const l of correctLines) {
+      text(l, { x: MARGIN + 12, size: 9, color: GREEN });
+      y -= 12;
+    }
     for (const l of rationaleLines) {
       text(l, { x: MARGIN + 12, size: 8.5, color: MUTED });
       y -= 11;
