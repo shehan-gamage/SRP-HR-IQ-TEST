@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { candidateById, statusOf } from '@/lib/db';
-import { markInviteEmailed, remainingSec, resultFor } from '@/lib/sitting';
+import { markInviteEmailed, parseAnswers, remainingSec, resultFor } from '@/lib/sitting';
 import { sendInviteEmail } from '@/lib/mail';
 import { requireAdmin } from '@/lib/auth';
 import { CUTOFF } from '@/lib/scoring';
@@ -59,6 +59,9 @@ export default async function CandidateDetail({
 
   const elapsed =
     c.started_at && c.submitted_at ? Math.round((c.submitted_at - c.started_at) / 1000) : null;
+  const answered = Object.values(parseAnswers(c)).filter(
+    (v) => v !== null && v !== undefined,
+  ).length;
 
   return (
     <div className="wrap">
@@ -151,6 +154,10 @@ export default async function CandidateDetail({
             <tr>
               <th>Time Used</th>
               <td>{elapsed === null ? '—' : `${Math.floor(elapsed / 60)} min ${elapsed % 60} s`}</td>
+            </tr>
+            <tr>
+              <th>Questions Answered</th>
+              <td>{c.started_at ? `${answered} of ${bank.items.length}` : '—'}</td>
             </tr>
             <tr>
               <th>Completion</th>
