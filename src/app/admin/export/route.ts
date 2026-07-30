@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   const domainCodes = Object.keys(DOMAINS) as DomainCode[];
   const header = [
     'Name', 'First name', 'Middle name', 'Last name',
-    'Candidate ID', 'Position', 'Difficulty', 'Email', 'Status',
+    'Candidate ID', 'Company', 'Position', 'Difficulty', 'Email', 'Status',
     'Score', 'Total', 'Percent', 'Tier', 'Meets cut-off',
     ...domainCodes.map((d) => DOMAINS[d]),
     'Extra time', 'Time allowed (min)', 'Time used (s)',
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     lines.push(
       [
         c.name, c.first_name, c.middle_name, c.last_name,
-        c.ref, c.position, bankFor(c.level).name, c.email, status,
+        c.ref, c.company, c.position, bankFor(c.level).name, c.email, status,
         r ? r.score : '', r ? r.total : '', r ? r.pct : '',
         c.band ? BANDS.find((b) => b.slug === c.band)?.name : '',
         r ? (r.score >= CUTOFF ? 'YES' : 'NO') : '',

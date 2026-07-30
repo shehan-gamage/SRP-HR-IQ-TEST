@@ -6,6 +6,7 @@ import { CandidateRow } from './db';
 import { parseAnswers, resultFor } from './sitting';
 import { DOMAINS, bankFor } from './questions';
 import { fmtDateTime } from './dates';
+import { companyOrDefault } from './companies';
 
 /**
  * Candidate-facing submission receipt.
@@ -191,6 +192,7 @@ export async function buildReceipt(c: CandidateRow): Promise<Uint8Array> {
 
   const rows: [string, string][] = [
     ['Candidate', c.name],
+    ['Company', companyOrDefault(c.company)],
     ['Position Applied For', c.position || '—'],
     ['Difficulty', bank.name],
     ['Reference', referenceCode(c)],

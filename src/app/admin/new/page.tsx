@@ -6,6 +6,7 @@ import { createInvite, markInviteEmailed } from '@/lib/sitting';
 import { mailConfigured, sendInviteEmail } from '@/lib/mail';
 import { requireAdmin } from '@/lib/auth';
 import { BANKS, LEVELS, Level } from '@/lib/questions';
+import { COMPANIES } from '@/lib/companies';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'New Invite' };
@@ -20,14 +21,17 @@ async function create(formData: FormData) {
   const sendNow = formData.get('sendNow') === 'on';
   const rawLevel = String(formData.get('level') ?? 'basic');
   const level: Level = (LEVELS as string[]).includes(rawLevel) ? (rawLevel as Level) : 'basic';
+  const company = String(formData.get('company') ?? '').trim();
   if (!first || !last) redirect('/admin/new?e=1');
   if (sendNow && !email) redirect('/admin/new?e=2');
+  if (!COMPANIES.includes(company)) redirect('/admin/new?e=3');
 
   const c = await createInvite({
     first,
     middle,
     last,
     level,
+    company,
     position: String(formData.get('position') ?? ''),
     email,
     validDays: Number(formData.get('validDays') ?? 14),
@@ -74,6 +78,15 @@ export default async function NewInvite({
             </label>
           </div>
           <label className="fld">
+            <span>Company (Required)</span>
+            <select name="company" required defaultValue="">
+              <option value="" disabled>Select Company</option>
+              {COMPANIES.map((co) => (
+                <option key={co} value={co}>{co}</option>
+              ))}
+            </select>
+          </label>
+          <label className="fld">
             <span>Position Applied For</span>
             <input type="text" name="position" autoComplete="off" />
           </label>
@@ -114,6 +127,9 @@ export default async function NewInvite({
           {e === '1' ? <p className="err" role="alert">First and last name are required.</p> : null}
           {e === '2' ? (
             <p className="err" role="alert">An email address is required to send the invite.</p>
+          ) : null}
+          {e === '3' ? (
+            <p className="err" role="alert">Select the company the candidate is applying to.</p>
           ) : null}
           <div className="row" style={{ marginTop: '1rem' }}>
             <SubmitButton className="primary" pendingLabel="Creating Invite…">

@@ -77,6 +77,8 @@ export interface NewInvite {
   last: string;
   /** Difficulty level; defaults to 'basic'. Sets the item bank and time limit. */
   level?: Level;
+  /** SRP group company the candidate is applying to. */
+  company?: string;
   position?: string;
   email?: string;
   /**
@@ -111,6 +113,7 @@ export async function createInvite(input: NewInvite): Promise<CandidateRow> {
     middle_name: middle,
     last_name: last,
     level: bank.level,
+    company: (input.company ?? '').trim(),
     ref: (input.ref ?? '').trim(),
     position: (input.position ?? '').trim(),
     email: (input.email ?? '').trim(),
@@ -122,12 +125,12 @@ export async function createInvite(input: NewInvite): Promise<CandidateRow> {
   const db = await getDb();
   await db.execute({
     sql: `INSERT INTO candidates
-       (id, token, name, first_name, middle_name, last_name, level, ref, position, email,
+       (id, token, name, first_name, middle_name, last_name, level, company, ref, position, email,
         extra_time, duration_sec, created_at, expires_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [
       row.id, row.token, row.name, row.first_name, row.middle_name, row.last_name,
-      row.level, row.ref, row.position, row.email,
+      row.level, row.company, row.ref, row.position, row.email,
       row.extra_time, row.duration_sec, row.created_at, row.expires_at,
     ],
   });

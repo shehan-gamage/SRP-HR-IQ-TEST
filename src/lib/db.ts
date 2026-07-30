@@ -37,6 +37,7 @@ async function open(): Promise<Client> {
       middle_name   TEXT NOT NULL DEFAULT '',
       last_name     TEXT NOT NULL DEFAULT '',
       level         TEXT NOT NULL DEFAULT 'basic',
+      company       TEXT NOT NULL DEFAULT '',
       ref           TEXT NOT NULL,
       position      TEXT NOT NULL DEFAULT '',
       email         TEXT NOT NULL DEFAULT '',
@@ -67,6 +68,7 @@ async function open(): Promise<Client> {
     "middle_name TEXT NOT NULL DEFAULT ''",
     "last_name TEXT NOT NULL DEFAULT ''",
     "level TEXT NOT NULL DEFAULT 'basic'",
+    "company TEXT NOT NULL DEFAULT ''",
   ]) {
     if (!cols.has(ddl.split(' ')[0])) {
       await client.execute(`ALTER TABLE candidates ADD COLUMN ${ddl}`);
@@ -99,6 +101,8 @@ export interface CandidateRow {
   last_name: string;
   /** Difficulty level: 'basic' | 'advanced' | 'expert'. Legacy rows are 'basic'. */
   level: string;
+  /** SRP group company the candidate applied to. Empty on legacy rows. */
+  company: string;
   ref: string;
   position: string;
   email: string;

@@ -135,6 +135,7 @@ export default async function CandidateDetail({
           <tbody>
             {c.ref ? <tr><th>Candidate ID</th><td>{c.ref}</td></tr> : null}
             <tr><th>Difficulty</th><td>{bank.name}</td></tr>
+            <tr><th>Company</th><td>{c.company || '—'}</td></tr>
             <tr><th>Email</th><td>{c.email || '—'}</td></tr>
             <tr><th>Invite Emailed</th><td>{fmt(c.invite_emailed_at)}</td></tr>
             <tr><th>Invited</th><td>{fmt(c.created_at)}</td></tr>

@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import type { CandidateRow } from './db';
 import { fmtDate } from './dates';
+import { companyOrDefault } from './companies';
 
 /**
  * Invite delivery over Google Workspace SMTP, mirroring the SRP website's
@@ -40,13 +41,14 @@ export async function sendInviteEmail(c: CandidateRow, link: string): Promise<Se
   // Salutations use the first name only; fall back to the first word for
   // records created before the name was stored in parts.
   const dear = c.first_name || c.name.split(/\s+/)[0];
+  const company = companyOrDefault(c.company);
   const expires = fmtDate(c.expires_at);
   const forRole = c.position ? ` for the position of ${c.position}` : '';
 
   const text = [
     `Dear ${dear},`,
     '',
-    `As part of your application${forRole} with SRP International, you are invited to complete an online cognitive aptitude assessment.`,
+    `As part of your application${forRole} with ${company}, you are invited to complete an online cognitive aptitude assessment.`,
     '',
     `Your personal test link:`,
     link,
@@ -67,7 +69,7 @@ export async function sendInviteEmail(c: CandidateRow, link: string): Promise<Se
   const html = `
     <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#1a1a1a;max-width:560px">
       <p>Dear ${esc(dear)},</p>
-      <p>As part of your application${esc(forRole)} with SRP International, you are invited to complete
+      <p>As part of your application${esc(forRole)} with ${esc(company)}, you are invited to complete
          an online cognitive aptitude assessment.</p>
       <p style="margin:24px 0">
         <a href="${esc(link)}" style="background:#1a56db;color:#ffffff;text-decoration:none;
@@ -94,7 +96,7 @@ export async function sendInviteEmail(c: CandidateRow, link: string): Promise<Se
       // Object form: nodemailer handles display-name quoting/encoding itself.
       to: { name: c.name, address: c.email },
       ...(MAIL_CC ? { cc: MAIL_CC } : {}),
-      subject: 'Your Assessment Invitation — SRP International',
+      subject: `Your Assessment Invitation — ${company}`,
       text,
       html,
     });
