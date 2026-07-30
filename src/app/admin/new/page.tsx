@@ -65,20 +65,20 @@ export default async function NewInvite({
         <form action={create}>
           <div className="row" style={{ alignItems: 'flex-end' }}>
             <label className="fld" style={{ flex: '1 1 140px' }}>
-              <span>First Name (Required)</span>
+              <span>First Name<span className="req" aria-hidden="true"> *</span></span>
               <input type="text" name="first" autoFocus autoComplete="off" required />
             </label>
             <label className="fld" style={{ flex: '1 1 140px' }}>
-              <span>Middle Name (Optional)</span>
+              <span>Middle Name</span>
               <input type="text" name="middle" autoComplete="off" />
             </label>
             <label className="fld" style={{ flex: '1 1 140px' }}>
-              <span>Last Name (Required)</span>
+              <span>Last Name<span className="req" aria-hidden="true"> *</span></span>
               <input type="text" name="last" autoComplete="off" required />
             </label>
           </div>
           <label className="fld">
-            <span>Company (Required)</span>
+            <span>Company<span className="req" aria-hidden="true"> *</span></span>
             <select name="company" required defaultValue="">
               <option value="" disabled>Select Company</option>
               {COMPANIES.map((co) => (
