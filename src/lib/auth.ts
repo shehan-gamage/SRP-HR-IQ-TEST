@@ -4,13 +4,54 @@ import { redirect } from 'next/navigation';
 
 /**
  * Single shared HR account, authenticated against ADMIN_PASSWORD and carried
- * in an HMAC-signed cookie. Deliberately minimal: this app is designed to run
- * on your own network. If you ever expose it to the public internet, replace
- * this with per-user accounts and real password hashing before you do.
+ * in an HMAC-signed cookie. Now that the app is internet-facing, login is
+ * rate-limited per IP; for anything higher-stakes, replace this with per-user
+ * accounts and real password hashing.
  */
 
 const COOKIE = 'hriq_session';
 const SESSION_HOURS = 12;
+
+/* ---- login throttling -----------------------------------------------------
+   Per-IP failed-attempt lockout. In-memory, so on serverless each warm
+   instance keeps its own counters — this blocks naive hammering rather than
+   a distributed attack, which is the right cost/benefit for this app. */
+const FAIL_LIMIT = 5;
+const FAIL_WINDOW_MS = 15 * 60_000;
+
+const g = globalThis as unknown as {
+  __hriqLoginFails?: Map<string, { count: number; first: number }>;
+};
+function fails(): Map<string, { count: number; first: number }> {
+  return (g.__hriqLoginFails ??= new Map());
+}
+
+/** True when this IP has exhausted its attempts for the current window. */
+export function loginThrottled(ip: string): boolean {
+  const f = fails().get(ip);
+  if (!f) return false;
+  if (Date.now() - f.first > FAIL_WINDOW_MS) {
+    fails().delete(ip);
+    return false;
+  }
+  return f.count >= FAIL_LIMIT;
+}
+
+export function recordLoginFailure(ip: string): void {
+  const now = Date.now();
+  const map = fails();
+  // Keep the map bounded: drop expired entries once it grows.
+  if (map.size > 1000) {
+    for (const [k, v] of map) if (now - v.first > FAIL_WINDOW_MS) map.delete(k);
+  }
+  const f = map.get(ip);
+  if (!f || now - f.first > FAIL_WINDOW_MS) map.set(ip, { count: 1, first: now });
+  else f.count++;
+}
+
+export function clearLoginFailures(ip: string): void {
+  fails().delete(ip);
+}
 
 function secret(): string {
   const s = process.env.SESSION_SECRET;

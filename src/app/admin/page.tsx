@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { headers } from 'next/headers';
 import { revalidatePath } from 'next/cache';
 import { allCandidates, statusOf } from '@/lib/db';
+import { requireAdmin } from '@/lib/auth';
 import { deleteCandidate, sweepExpired } from '@/lib/sitting';
 import { BANDS, CUTOFF } from '@/lib/scoring';
 import { LEVELS, TOTAL_ITEMS, bankFor } from '@/lib/questions';
@@ -21,6 +22,9 @@ async function baseUrl(): Promise<string> {
 
 async function removeCandidate(formData: FormData) {
   'use server';
+  // Server actions are their own POST endpoints; the auth-gated layout does
+  // not protect them, so every mutating action checks for itself.
+  await requireAdmin();
   await deleteCandidate(String(formData.get('id')));
   revalidatePath('/admin');
 }

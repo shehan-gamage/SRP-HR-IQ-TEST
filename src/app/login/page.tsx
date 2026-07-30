@@ -1,13 +1,29 @@
 import { redirect } from 'next/navigation';
-import { checkPassword, createSession, isAuthed } from '@/lib/auth';
+import { headers } from 'next/headers';
+import {
+  checkPassword,
+  clearLoginFailures,
+  createSession,
+  isAuthed,
+  loginThrottled,
+  recordLoginFailure,
+} from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'HR Sign In' };
 
 async function login(formData: FormData) {
   'use server';
+  const h = await headers();
+  const ip = (h.get('x-forwarded-for') ?? 'unknown').split(',')[0].trim();
+  if (loginThrottled(ip)) redirect('/login?e=2');
+
   const password = String(formData.get('password') ?? '');
-  if (!checkPassword(password)) redirect('/login?e=1');
+  if (!checkPassword(password)) {
+    recordLoginFailure(ip);
+    redirect(loginThrottled(ip) ? '/login?e=2' : '/login?e=1');
+  }
+  clearLoginFailures(ip);
   await createSession();
   redirect('/admin');
 }
@@ -30,7 +46,12 @@ export default async function LoginPage({
             <span>Password</span>
             <input type="password" name="password" autoFocus autoComplete="current-password" required />
           </label>
-          {e ? <p className="err" role="alert">Incorrect password.</p> : null}
+          {e === '1' ? <p className="err" role="alert">Incorrect password.</p> : null}
+          {e === '2' ? (
+            <p className="err" role="alert">
+              Too many failed attempts. Wait 15 minutes and try again.
+            </p>
+          ) : null}
           <button className="primary" type="submit">Sign In</button>
         </form>
       </div>
