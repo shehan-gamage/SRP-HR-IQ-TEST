@@ -87,13 +87,13 @@ export default async function CandidateDetail({
         </div>
       ) : mail === 'failed' ? (
         <div className="banner crit noprint" role="alert">
-          The invite email could not be sent. Check the server log and the SMTP settings in
-          .env.local, or copy the link below and send it manually.
+          The invite email could not be sent — the mail account may be rejecting its credentials.
+          Copy the link below and send it manually, and ask IT to check the SMTP settings.
         </div>
       ) : mail === 'unconfigured' ? (
         <div className="banner warn noprint" role="alert">
-          Email is not configured (set SMTP_USER / SMTP_PASS in .env.local and restart).
-          Copy the link below and send it manually.
+          Email sending is not configured on this server (SMTP_USER / SMTP_PASS). Copy the link
+          below and send it manually.
         </div>
       ) : isNew ? (
         <div className="banner info noprint" role="status">

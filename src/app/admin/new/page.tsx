@@ -120,8 +120,8 @@ export default async function NewInvite({
           </label>
           {!mailConfigured ? (
             <p className="note">
-              Email sending is not configured (set SMTP_USER / SMTP_PASS in .env.local).
-              The invite will still be created; copy the link manually.
+              Email sending is not configured on this server (SMTP_USER / SMTP_PASS). The invite
+              will still be created; copy the link manually.
             </p>
           ) : null}
           {e === '1' ? <p className="err" role="alert">First and last name are required.</p> : null}
